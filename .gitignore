@@ -1,0 +1,13 @@
+.env
+credentials.json
+users.json
+*.db
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+.vscode/
+budget_buddy/
+graphify-out/
+go
+program

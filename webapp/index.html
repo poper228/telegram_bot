@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iDM store</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --bg: var(--tg-theme-bg-color, #ffffff);
+    --text: var(--tg-theme-text-color, #000000);
+    --hint: var(--tg-theme-hint-color, #999999);
+    --btn: var(--tg-theme-button-color, #2481cc);
+    --btn-text: var(--tg-theme-button-text-color, #ffffff);
+    --secondary-bg: var(--tg-theme-secondary-bg-color, #f4f4f5);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 16px;
+    font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  h1 { font-size: 20px; margin: 0 0 16px; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .tab {
+    flex: 1; padding: 10px; border: none; border-radius: 10px;
+    background: var(--secondary-bg); color: var(--text);
+    font-size: 14px; cursor: pointer;
+  }
+  .tab.active { background: var(--btn); color: var(--btn-text); }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  label { display: block; font-size: 14px; color: var(--hint); margin: 12px 0 6px; }
+  input, textarea {
+    width: 100%; padding: 12px; border-radius: 10px;
+    border: 1px solid var(--secondary-bg); background: var(--secondary-bg);
+    color: var(--text); font-size: 16px; font-family: inherit;
+    outline: none;
+  }
+  textarea { min-height: 100px; resize: vertical; }
+  .result {
+    margin-top: 16px; padding: 16px; border-radius: 12px;
+    background: var(--secondary-bg); font-size: 20px; font-weight: 600;
+    text-align: center;
+  }
+  .hint { font-size: 12px; color: var(--hint); margin-top: 8px; text-align: center; }
+  button.primary {
+    margin-top: 20px; width: 100%; padding: 14px;
+    border: none; border-radius: 12px;
+    background: var(--btn); color: var(--btn-text);
+    font-size: 16px; font-weight: 600; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<div class="tabs">
+  <button class="tab active" data-screen="calc">🧮 Калькулятор</button>
+  <button class="tab" data-screen="order">🛒 Заказ</button>
+</div>
+
+<div id="calc" class="screen active">
+  <h1>Расчёт стоимости</h1>
+  <label>Цена в юанях</label>
+  <input type="number" id="yuan" placeholder="Например, 250" step="0.01">
+  <div class="result" id="calcResult">— ₽</div>
+  <div class="hint">Курс 12.5 ₽ × 1.1 (комиссия) + 300 ₽ доставка</div>
+</div>
+
+<div id="order" class="screen">
+  <h1>Оформить заказ</h1>
+  <label>Ссылка на товар</label>
+  <input type="text" id="link" placeholder="https://...">
+  <label>Комментарий (размер, цвет и т.п.)</label>
+  <textarea id="comment" placeholder="Размер M, чёрный..."></textarea>
+  <button class="primary" id="sendOrder">Отправить заказ</button>
+</div>
+
+<script>
+const tg = window.Telegram.WebApp;
+tg.ready();
+tg.expand();
+
+document.querySelectorAll('.tab').forEach(t => {
+  t.onclick = () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.screen').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById(t.dataset.screen).classList.add('active');
+  };
+});
+
+const yuanInput = document.getElementById('yuan');
+const calcResult = document.getElementById('calcResult');
+yuanInput.oninput = () => {
+  const y = parseFloat(yuanInput.value);
+  if (isNaN(y)) { calcResult.textContent = '— ₽'; return; }
+  const rub = y * 12.5 * 1.1 + 300;
+  calcResult.textContent = rub.toFixed(2) + ' ₽';
+};
+
+document.getElementById('sendOrder').onclick = () => {
+  const link = document.getElementById('link').value.trim();
+  const comment = document.getElementById('comment').value.trim();
+  if (!link && !comment) {
+    tg.showAlert('Заполните ссылку или комментарий');
+    return;
+  }
+  tg.sendData(JSON.stringify({
+    action: 'order',
+    link: link,
+    comment: comment
+  }));
+  tg.close();
+};
+</script>
+</body>
+</html>
