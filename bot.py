@@ -601,7 +601,9 @@ def handle_reply_button(call):
     try:
         user_id = int(call.data.split("_")[1])
         msg = bot.send_message(
-            call.from_user.id, f"✏️ Введите сообщение для пользователя {user_id}:"
+            call.from_user.id,
+            f"✏️ Введите сообщение для пользователя {user_id}:\n"
+            f"(для отмены отправьте /cancel)",
         )
         bot.register_next_step_handler(msg, send_message_to_user, user_id)
     except (ValueError, ApiTelegramException) as e:
@@ -610,6 +612,16 @@ def handle_reply_button(call):
 
 
 def send_message_to_user(message, user_id):
+    text = message.text or ""
+    if text == "/cancel":
+        bot.send_message(MANAGER_CHAT_ID, "🚫 Отправка отменена.")
+        return
+    if text.startswith("/") or text in MENU_BUTTONS:
+        # Любая другая команда или кнопка меню тоже отменяет отправку
+        bot.send_message(MANAGER_CHAT_ID, "🚫 Отправка отменена.")
+        bot.process_new_messages([message])
+        return
+
     try:
         if message.text:
             bot.send_message(user_id, message.text)
